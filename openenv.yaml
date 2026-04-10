@@ -1,0 +1,64 @@
+name: code_debug_env
+version: "1.0.0"
+description: >
+  A real-world OpenEnv environment for Code Debugging and Repair.
+  The agent receives buggy Python code and an error/wrong-output log and
+  must return the corrected, runnable code.  Reward is computed by
+  executing the submitted code and comparing its stdout to an expected
+  answer, with partial credit for syntax validity and successful execution.
+
+author: "Abhay Jha & Ganesh Raikwar"
+license: MIT
+
+tasks:
+  - name: easy_syntax_fix
+    difficulty: easy
+    description: "Fix a SyntaxError in a recursive factorial function."
+    reward_range: [0.0, 1.0]
+
+  - name: medium_logic_fix
+    difficulty: medium
+    description: "Fix logic errors in a function returning the two largest numbers."
+    reward_range: [0.0, 1.0]
+
+  - name: hard_runtime_fix
+    difficulty: hard
+    description: "Fix multiple bugs (comparison, direction, missing remainder) in a merge-sorted function."
+    reward_range: [0.0, 1.0]
+
+action_space:
+  type: object
+  properties:
+    fixed_code:
+      type: string
+      description: "The complete corrected Python source code."
+
+observation_space:
+  type: object
+  properties:
+    task_id:        {type: string}
+    task_name:      {type: string}
+    buggy_code:     {type: string}
+    error_log:      {type: string}
+    description:    {type: string}
+    hint:           {type: string, nullable: true}
+    last_action_error: {type: string, nullable: true}
+    step_count:     {type: integer}
+    done:           {type: boolean}
+    reward:         {type: number}
+
+endpoints:
+  reset: POST /reset
+  step:  POST /step
+  state: GET  /state
+
+reward_function: >
+  Partial reward:
+    0.00 — syntax invalid
+    0.25 — syntax valid
+    0.50 — code runs without error
+    0.75 — code produces non-empty output
+    1.00 — stdout exactly matches expected output
+
+episode_termination: >
+  Episode ends when reward == 1.0 (success) or step_count >= 5 (max steps).
